@@ -3,7 +3,9 @@ module SingleSelectExample exposing (Model, Msg, init, subscriptions, update, vi
 import Html exposing (Html, button, div, form, h1, input, p, text)
 import Html.Attributes exposing (id, style)
 import Html.Events exposing (onSubmit)
+import Html.Styled
 import Json.Decode as Decode
+import Select
 import SingleSelect
 import SmartSelect.Settings exposing (defaultSettings)
 
@@ -15,11 +17,20 @@ type alias Product =
     }
 
 
+type Country
+    = Australia
+    | Japan
+    | Taiwan
+
+
 type alias Model =
     { products : List Product
     , select : SingleSelect.SmartSelect Msg Product
     , selectedProduct : Maybe Product
     , wasFormSubmitted : Bool
+    , selectState : Select.State
+    , items : List (Select.MenuItem Country)
+    , selectedCountry : Maybe Country
     }
 
 
@@ -28,6 +39,7 @@ type Msg
     | HandleSelection ( Product, SingleSelect.Msg Product )
     | HandleFormSubmission
     | OnViewChange
+    | SelectMsg (Select.Msg Country)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -57,6 +69,38 @@ update msg model =
             in
             ( { model | select = updatedSelect }, selectCmd )
 
+        SelectMsg selectMsg ->
+            let
+                ( maybeAction, updatedSelectState, selectCmds ) =
+                    Select.update selectMsg model.selectState
+            in
+            ( { model | selectState = updatedSelectState }
+            , Cmd.map SelectMsg selectCmds
+            )
+
+
+selectedCountryToMenuItem : Country -> Select.MenuItem Country
+selectedCountryToMenuItem country =
+    case country of
+        Australia ->
+            Select.basicMenuItem { item = Australia, label = "Australia" }
+
+        Japan ->
+            Select.basicMenuItem { item = Japan, label = "Japan" }
+
+        Taiwan ->
+            Select.basicMenuItem { item = Taiwan, label = "Taiwan" }
+
+
+renderSelect : Model -> Html.Styled.Html (Select.Msg Country)
+renderSelect model =
+    Select.view
+        ((Select.single <| Maybe.map selectedCountryToMenuItem model.selectedCountry)
+            |> Select.state model.selectState
+            |> Select.menuItems model.items
+            |> Select.placeholder "Select your country"
+        )
+
 
 view : Model -> Html Msg
 view model =
@@ -81,20 +125,47 @@ view model =
                     "Press 'Enter' from input field or push the button below to submit form."
                 )
             ]
-        , form [ onSubmit HandleFormSubmission ]
-            [ input [ style "margin-bottom" "2rem" ] []
-            , p [] [ text "The select will automatically open to the top, if there is not enought space." ]
-            , div
-                [ style "width" "500px", style "margin-bottom" "1rem" ]
-                [ SingleSelect.view
-                    { selected = model.selectedProduct
-                    , options = model.products
-                    , optionLabelFn = .name
-                    , settings = defaultSettings
-                    }
-                    model.select
+        , div
+            [ style "position" "fixed"
+            , style "width" "100%"
+            , style "top" "0"
+            , style "left" "0"
+            , style "height" "100%"
+            , style "width" "100%"
+            , style "z-index" "1"
+            , style "background" "rgba(0,0,0,0.5)"
+            , style "display" "flex"
+            , style "justify-content" "center"
+            , style "align-items" "center"
+            ]
+            [ div
+                [ style "width" "500px"
+                , style "height" "500px"
+                , style "background" "white"
+                , style "padding" "2rem"
+                , style "overflow" "auto"
                 ]
-            , button [] [ text "Submit" ]
+                [ form [ onSubmit HandleFormSubmission ]
+                    [ input [ style "margin-bottom" "2rem" ] []
+                    , p [] [ text "The select will automatically open to the top, if there is not enought space." ]
+                    , div []
+                        [ text "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet." ]
+                    , div
+                        [ style "margin-bottom" "1rem" ]
+                        [ SingleSelect.view
+                            { selected = model.selectedProduct
+                            , options = model.products
+                            , optionLabelFn = .name
+                            , settings = defaultSettings
+                            }
+                            model.select
+                        ]
+                    , div
+                        [ style "margin-bottom" "1rem" ]
+                        [ Html.map SelectMsg (renderSelect model |> Html.Styled.toUnstyled) ]
+                    , button [] [ text "Submit" ]
+                    ]
+                ]
             ]
         , div [ style "height" "100vh" ] []
         ]
@@ -152,6 +223,17 @@ init =
                 }
       , selectedProduct = Nothing
       , wasFormSubmitted = False
+      , selectState =
+            Select.initState (Select.selectIdentifier "CountrySelector")
+      , items =
+            [ Select.basicMenuItem
+                { item = Australia, label = "Australia" }
+            , Select.basicMenuItem
+                { item = Japan, label = "Japan" }
+            , Select.basicMenuItem
+                { item = Taiwan, label = "Taiwan" }
+            ]
+      , selectedCountry = Nothing
       }
     , Cmd.none
     )

@@ -7,6 +7,7 @@
     "elm-version": "0.19.1",
     "dependencies": {
         "direct": {
+            "Confidenceman02/elm-select": "12.0.1",
             "avh4/elm-color": "1.0.0",
             "damienklinnert/elm-spinner": "3.0.2",
             "elm/browser": "1.0.2",
@@ -25,6 +26,7 @@
             "elm/file": "1.0.5",
             "elm/time": "1.0.0",
             "elm/virtual-dom": "1.0.3",
+            "elm-community/list-extra": "8.7.0",
             "robinheghan/murmur3": "1.0.0",
             "rtfeldman/elm-hex": "1.0.0"
         }

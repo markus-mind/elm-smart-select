@@ -6,7 +6,7 @@ import Html.Events exposing (onSubmit)
 import Http
 import Json.Decode as Decode exposing (Decoder)
 import MultiSelectRemote
-import SmartSelect.Settings exposing (defaultSettings, defaultRemoteSettings, RemoteSettings)
+import SmartSelect.Settings exposing (RemoteSettings, defaultRemoteSettings, defaultSettings)
 
 
 type alias Language =
@@ -108,9 +108,11 @@ view model =
         , div [ style "height" "100vh" ] []
         ]
 
+
 customRemoteSettings : RemoteSettings msg Language
-customRemoteSettings = 
+customRemoteSettings =
     defaultRemoteSettings httpRemoteSearchAttrs
+
 
 init : ( Model, Cmd Msg )
 init =
